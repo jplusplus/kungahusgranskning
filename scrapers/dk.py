@@ -51,7 +51,7 @@ class DKCalendar(RoyalCalendar):
             data.append({
                 "link": row.find("a")["href"],
                 "description": row.find("a").text,
-                "date": self._parse_date(date_string),
+                "date_start": self._parse_date(date_string),
                 "country": "Danmark"
             })
         return data
