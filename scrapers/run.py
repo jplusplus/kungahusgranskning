@@ -3,6 +3,7 @@
 from royal_calendar import RoyalCalendar
 from dk import DKCalendar
 from no import NOCalendar
+from se import SECalendar
 
 """ Example queries to get Danish calendar:
     # Init
@@ -34,23 +35,24 @@ from no import NOCalendar
     no_calendar.insert_by_person_data(data)
 """
 
+"""
 # Init
-no_calendar = NOCalendar("data/calendars.db")
+se_calendar = SECalendar("data/calendars.db")
 
 # Scrape data for a number of years
-data = no_calendar.scrape([2015])
+data = se_calendar.scrape([2015])
 
 # Add data to db
-no_calendar.insert_by_person_data(data)
+se_calendar.insert_by_person_data(data, additional_keys=["title"])
+"""
 
 """ General calendar functions.
-
-    # Init
-    calendar = RoyalCalendar("data/calendars.db")
-
-    # Sync "by event" and "by person" tables
-    calendar.sync_tables()
-
-    # Save tables to csv
-    calendar.save_csv()
 """
+# Init
+calendar = RoyalCalendar("data/calendars.db")
+
+# Sync "by event" and "by person" tables
+calendar.sync_tables()
+
+# Save tables to csv
+calendar.save_csv()

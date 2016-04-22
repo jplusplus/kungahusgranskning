@@ -1,6 +1,7 @@
 # encode: utf-8
 import dataset
 from copy import deepcopy
+import pdb 
 
 class RoyalCalendar(object):
     def insert_by_event_data(self, data, additional_keys=[]):
@@ -18,7 +19,10 @@ class RoyalCalendar(object):
         print ("Add %s rows to database" % len(data))
         keys = ["date_start", "date_end", "country", "person"] + additional_keys
         for row in data:
-            self.tables["by_person"].upsert(row, keys)
+            try:
+                self.tables["by_person"].upsert(row, keys)
+            except:
+                pdb.set_trace()
 
     def sync_tables(self):
         by_person_data = []
@@ -33,6 +37,7 @@ class RoyalCalendar(object):
                 by_person_data.append(person_row)
 
         self.insert_by_person_data(by_person_data)
+
 
 
     def save_csv(self):
