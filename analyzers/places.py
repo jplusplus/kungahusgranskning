@@ -16,6 +16,9 @@ def get_location_category(text):
         pass
     try:
         placename = palaces.get_place_name(text)
+        print placename
+#        placepos = geoposition(placename)
+        return palaces.UNKNOWN
     except palaces.NotFoundError:
         pass
 
