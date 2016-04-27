@@ -1,6 +1,7 @@
 # encoding: utf-8
 """ Helper functions and classes for determining the location of royal events
 """
+import re
 
 """Place categories"""
 UNKNOWN = 0
@@ -52,4 +53,6 @@ def contains_palace_name(text):
 
 
 def get_place_name(text):
-    pass
+    for place_name_pattern in place_name_patterns:
+        p = re.compile('\d+')
+        print p.findall(text)

@@ -14,10 +14,10 @@ def get_location_category(text):
             return palaces.AT_HOME
     except palaces.NotFoundError:
         pass
-#    try:
-#        return palaces.contains_palace_name(text)
-#    except palaces.NotFoundError:
-#        pass
+    try:
+        placename = palaces.get_place_name(text)
+    except palaces.NotFoundError:
+        pass
 
     return palaces.UNKNOWN
 
