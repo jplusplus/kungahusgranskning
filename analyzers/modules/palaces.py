@@ -28,17 +28,26 @@ palaces = [
     u"Oscarshall",
     u"Kungliga slottet",
     u"Slottskapellet",
+    u"slottsbalkongen",
     u"Hovstallet",
     u"Lejonbacken",
     u"Yttre borggården",
     u"Ulriksdal",
     u"konselj",
     u"Gripsholm",
+    u"Hagaparken",
+    u"Bernadottebiblioteket",
 ]
 
 place_name_patterns = [
     # pylint: disable=E501
-    "(([A-ZÅÄÖØÆ][a-zåäöøæüñ][ ,])?(i )?[A-ZÅÄÖØÆ][a-zåäöøæüñ]+) \(\d\d\.\d\d\)",  # H.M. Dronningen besøker Sofienberghjemmet på Grünerløkka i Oslo (11.00).
+    "((([A-ZÅÄÖØÆ][a-zåäöøæüñ]+[ ,i]+)+)?[A-ZÅÄÖØÆ][a-zåäöøæüñ]+) \(\d\d\.\d\d\)",  # Grünerløkka i Oslo (11.00)
+    " i ([A-ZÅÄÖØÆ][a-zåäöøæüñ]+)\.$",  # i Roma.
+    " i ([A-ZÅÄÖØÆ][a-zåäöøæüñ]+)\.",  # i Roma.
+    " i ([A-ZÅÄÖØÆ][a-zåäöøæüñ]+)$",  # i Peru
+    "(([A-ZÅÄÖØÆ][a-zåäöøæüñ]+[ ])+, ([A-ZÅÄÖØÆ][a-zåäöøæüñ]+))$",  # Silicon Valley, USA
+    ", ([A-ZÅÄÖØÆ][a-zåäöøæüñ]+)$",  # , Stockholm
+    "[bB]es[öø]k i ([A-ZÅÄÖØÆ][a-zåäöøæüñ]+)",  # Besök i Peru och Bolivia
 ]
 
 
@@ -59,6 +68,5 @@ def get_place_name(text):
         p = re.compile(place_name_pattern)
         matches = p.search(text)
         if matches:
-            print matches.groups()  
-            return None
+            return matches.groups()[0]
     raise NotFoundError
