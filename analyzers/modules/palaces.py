@@ -37,7 +37,8 @@ palaces = [
 ]
 
 place_name_patterns = [
-    r"",
+    # pylint: disable=E501
+    "(([A-ZÅÄÖØÆ][a-zåäöøæüñ][ ,])?(i )?[A-ZÅÄÖØÆ][a-zåäöøæüñ]+) \(\d\d\.\d\d\)",  # H.M. Dronningen besøker Sofienberghjemmet på Grünerløkka i Oslo (11.00).
 ]
 
 
@@ -53,6 +54,11 @@ def contains_palace_name(text):
 
 
 def get_place_name(text):
+    matches = []
     for place_name_pattern in place_name_patterns:
-        p = re.compile('\d+')
-        print p.findall(text)
+        p = re.compile(place_name_pattern)
+        matches = p.search(text)
+        if matches:
+            print matches.groups()  
+            return None
+    raise NotFoundError
