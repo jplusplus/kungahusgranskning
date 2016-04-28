@@ -4,6 +4,9 @@
 import re
 import requests
 from time import sleep
+from simplekv.fs import FilesystemStore
+from json import dumps, loads
+
 
 """Place categories"""
 UNKNOWN = 0
@@ -87,12 +90,19 @@ def get_place_name(text):
 
 def geoposition(text):
     """ Use Google Maps API to geocode string """
+    store = FilesystemStore('./cache')
     url = "https://maps.googleapis.com/maps/api/geocode/json?address=%s&sensor=false&language=sv" % text
-    result = requests.get(url).json()
-    if len(result["results"]):
-        return result["results"][0]
-    else:
-        raise GeoCodingError
+    try:
+        result = store.get(text)
+        return loads(result)
+    except KeyError:
+        sleep(2)  # Sleep to avoid beoíng blocked by Google Maps API
+        result = requests.get(url).json()
+        if len(result["results"]):
+            store.put(text, dumps(result["results"][0]))
+            return result["results"][0]
+        else:
+            raise GeoCodingError
 
 
 def get_location_category(text, nation):
@@ -107,7 +117,6 @@ def get_location_category(text, nation):
         placename = get_place_name(text)
         print "Placename: %s" % placename
         try:
-            sleep(2)
             placepos = geoposition(placename)
         except GeoCodingError:
             print "Failed to geocode %s" % placename
