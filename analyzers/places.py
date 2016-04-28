@@ -34,11 +34,11 @@ def main():
 
             location_category = None
             if row["location"]:
-                location_category = palaces.get_location_category(row["location"], nation)
+                location_category, location = palaces.get_location_category(row["location"], nation)
             if not location_category:
-                location_category = palaces.get_location_category(row["title"], nation)
+                location_category, location = palaces.get_location_category(row["title"], nation)
             if not location_category:
-                location_category = palaces.get_location_category(row["description"], nation)
+                location_category, location = palaces.get_location_category(row["description"], nation)
 
             if person not in places:
                 places[person] = {
@@ -50,6 +50,7 @@ def main():
             places[person][location_category] += 1
             outputrow = row
             outputrow["location_category"] = palaces.category_names[location_category]
+            outputrow["location_name"] = location
             output.append(outputrow)
         print places
 
@@ -63,7 +64,8 @@ def main():
                       "person",
                       "link",
                       "location",
-                      "location_category"]
+                      "location_category",
+                      "location_name"]
         writer = DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(output)

@@ -208,7 +208,7 @@ def get_location_category(text, nation):
 
     try:
         if contains_palace_name(text, palaces_strong):
-            return AT_HOME
+            return (AT_HOME, None)
     except NotFoundError:
         pass
 
@@ -217,10 +217,10 @@ def get_location_category(text, nation):
         for component in placepos["address_components"]:
             if "country" in component["types"]:
                 if nation == component["long_name"]:
-                    return DOMESTIC
+                    return (DOMESTIC, component["long_name"])
                 else:
-                    return ABROAD
-        return UNKNOWN
+                    return (ABROAD, component["long_name"])
+        return (UNKNOWN, None)
     except NotFoundError:
         pass
     except TypeError:
@@ -228,14 +228,14 @@ def get_location_category(text, nation):
 
     try:
         if looks_domestic(text):
-            return DOMESTIC
+            return (DOMESTIC, None)
     except NotFoundError:
         pass
 
     try:
         if contains_palace_name(text, palaces_weak):
-            return AT_HOME
+            return (AT_HOME, None)
     except NotFoundError:
         pass
 
-    return UNKNOWN
+    return (UNKNOWN, None)
