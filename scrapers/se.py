@@ -72,6 +72,7 @@ class SECalendar(RoyalCalendar):
         r = requests.get(url)
         soup = BeautifulSoup(r.text, 'html.parser')
         persons = [x["value"] for x in soup.find('select', {'id': 'deltagare'}).find_all('option')][1:]
+        persons.remove("Besöksmålen")
         return persons
 
     def scrape(self, years=[2016]):
