@@ -32,8 +32,12 @@ def main():
             nation = row["country"]
             person = row["person"]
 
-            location_category = palaces.get_location_category(row["title"], nation)
-            if location_category == palaces.UNKNOWN:
+            location_category = None
+            if row["location"]:
+                location_category = palaces.get_location_category(row["location"], nation)
+            if not location_category:
+                location_category = palaces.get_location_category(row["title"], nation)
+            if not location_category:
                 location_category = palaces.get_location_category(row["description"], nation)
 
             if person not in places:
