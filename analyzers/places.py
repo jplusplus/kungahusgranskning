@@ -3,26 +3,8 @@
 """
 
 from modules.interface import Interface
-from csvkit import DictReader
+from csvkit import DictReader, DictWriter
 from modules import palaces
-
-
-def get_location_category(text):
-    """Use all available method, return first match"""
-    try:
-        if palaces.contains_palace_name(text):
-            return palaces.AT_HOME
-    except palaces.NotFoundError:
-        pass
-    try:
-        placename = palaces.get_place_name(text)
-        print placename
-#        placepos = geoposition(placename)
-        return palaces.UNKNOWN
-    except palaces.NotFoundError:
-        pass
-
-    return palaces.UNKNOWN
 
 
 def main():
@@ -42,16 +24,18 @@ def main():
                    commandline_args=cmd_args)
     ui.info(ui.args.infile)
 
+    output = []
     with open(ui.args.infile) as infile:
         csv_reader = DictReader(infile)
         places = {}
         for row in csv_reader:
-
-            location_category = get_location_category(row["title"])
-            if location_category == palaces.UNKNOWN:
-                location_category = get_location_category(row["description"])
-
+            nation = row["country"]
             person = row["person"]
+
+            location_category = palaces.get_location_category(row["title"], nation)
+            if location_category == palaces.UNKNOWN:
+                location_category = palaces.get_location_category(row["description"], nation)
+
             if person not in places:
                 places[person] = {
                     palaces.UNKNOWN: 0,
@@ -60,7 +44,26 @@ def main():
                     palaces.ABROAD: 0
                 }
             places[person][location_category] += 1
+            outputrow = row
+            outputrow["location_category"] = palaces.category_names[location_category]
+            output.append(outputrow)
         print places
+
+    with open('output.csv', 'w') as csvfile:
+        fieldnames = ["id",
+                      "description",
+                      "title",
+                      "country",
+                      "date_end",
+                      "date_start",
+                      "person",
+                      "link",
+                      "location",
+                      "location_category"]
+        writer = DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(output)
+
 
 if __name__ == '__main__':
     main()
