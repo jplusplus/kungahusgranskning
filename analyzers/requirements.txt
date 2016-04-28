@@ -1,1 +1,2 @@
 csvkit==0.9.1
+simplekv==0.10.0
