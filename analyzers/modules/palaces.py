@@ -28,20 +28,21 @@ category_names = {
 """Place names and other that indicate that the royal family member
    is at home
 """
-palaces = [
+palaces_strong = [
     u"audience",
     u"audiens",
     u"Audience",
     u"Audiens",
     u"Statsråd",
     u"Företräde för",
-    u"företräde för",
-    u"modtager",
-    u"mottagning",
-    u"Mottagning",
-    u"afholder pressemøde",
-    u"Statsbesök från ",
-    u"Lunch för ",
+    u"er rigsforstander",
+    u"er regent",
+    u"er værter",
+    u"Utrikesnämnd",
+    u"Kronprinsessans födelsedag",
+    u"Te Deum",
+    u"konselj",
+    u"Konselj",
 
     u"Det kongelige slott",
     u"Åpent Slott",
@@ -65,11 +66,24 @@ palaces = [
     u"Lejonbacken",
     u"Yttre borggården",
     u"Ulriksdal",
+    u"Drottningholm",
     u"konselj",
     u"Gripsholm",
     u"Hagaparken",
     u"Bernadottebiblioteket",
-    u"Te Deum",
+]
+
+palaces_weak = [
+    u"företräde för",
+    u"modtager",
+    u"mottagning",
+    u"Mottagning",
+    u"afholder pressemøde",
+    u"Statsbesök från ",
+    u"Lunch för ",
+    u"afholder gallataffel",
+    u"fødselsdag",
+    u"födelsedag",
 ]
 
 place_name_patterns = [
@@ -86,7 +100,7 @@ place_name_patterns = [
     u", ([A-ZÅÄÖØÆ][a-zåäöøæüñ]+)$",  # , Stockholm
     u" i ([A-ZÅÄÖØÆ][a-zåäöøæüñ]+)\.?$",  # i Roma.
     u" till? ([A-ZÅÄÖØÆ][a-zåäöøæüñ]+)\.?$",  # til Roma.
-    u"([A-ZÅÄÖØÆ][a-zåäöøæüñ]+) \(\d{1,2}.",  # Oslo (11.00)
+    u"([A-ZÅÄÖØÆ][a-zåäöøæüñ]+) \(\d{1,2}\.",  # Oslo (11.00)
     u"\(([A-ZÅÄÖØÆ][a-zåäöøæüñ]+), \d\d\.\d\d\)",  # (Holmenkollen, 11.30).
     u"([A-ZÅÄÖØÆ][a-zåäöøæüñ]+), \d{1,2}\.",  # , Tromsø, 29. - 31. januar
     u"([A-ZÅÄÖØÆ][a-zåäöøæüñ]+) den \d{1,2}\.",  # Tromsø den 29. - 31. januar
@@ -95,6 +109,7 @@ place_name_patterns = [
     u"i ([A-ZÅÄÖØÆ][a-zåäöøæüñ]+) kl\. \d{1,2}\.",  # i Tromsø 29. - 31. januar
     u"^([A-ZÅÄÖØÆ][a-zåäöøæüñ]+)$",  # Stockholm
     u"och ([A-ZÅÄÖØÆ][a-zåäöøæüñ]+)$",  # Umeå och Stockholm
+    u"^([A-ZÅÄÖØÆ][a-zåäöøæüñ]+ [A-ZÅÄÖØÆ]?[a-zåäöøæüñ]+)$",  # Uppsala domkyrka
 ]
 
 """Place names and other words that indicate that the royal family member
@@ -102,6 +117,7 @@ place_name_patterns = [
 """
 domestic = [
     u"invigning",
+    u"Invigning",
     u"inviger",
     u"indvielse",
     u"indvier",
@@ -109,6 +125,9 @@ domestic = [
     u"åbning",
     u"åpning",
     u"Nobel",
+    u"Närvaro vid ",
+    u"Besök hos ",
+
 ]
 
 
@@ -120,8 +139,8 @@ class GeoCodingError(StandardError):
     pass
 
 
-def contains_palace_name(text):
-    for palace in palaces:
+def contains_palace_name(text, namelist=palaces_strong):
+    for palace in namelist:
         if palace in text:
             return True
     raise NotFoundError
@@ -134,18 +153,17 @@ def looks_domestic(text):
     raise NotFoundError
 
 
-def get_place_name(text, reverse=False):
-    matches = []
-    if reverse is True:
-        patterns = place_name_patterns[::-1]
-    else:
-        patterns = place_name_patterns
-    for place_name_pattern in patterns:
+def get_place_names(text):
+    placenames = []
+    for place_name_pattern in place_name_patterns:
         p = re.compile(place_name_pattern)
         matches = p.search(text)
         if matches:
-            return matches.groups()[0]
-    raise NotFoundError
+            placenames.append(matches.groups()[0])
+    if len(placenames):
+        return placenames
+    else:
+        raise NotFoundError
 
 
 def geoposition(text):
@@ -176,29 +194,20 @@ def geoposition(text):
 def get_names_and_geocode(text):
     """Try and geocode things that look like place names
     """
-    placename = None
-    try:
-        placename = get_place_name(text)
-        if placename:
+    placenames = get_place_names(text)
+    for placename in placenames:
+        try:
             return geoposition(placename)
-    except GeoCodingError:
-        pass
-
-    try:
-        placename2 = get_place_name(text, reverse=True)
-        if placename and (placename != placename2):
-            return geoposition(placename)
-    except GeoCodingError:
-        pass
-        print u"Failed to geocode “%s”. Tried “%s” and “%s”." % (text, placename, placename2)
-
+        except GeoCodingError:
+            pass
     raise NotFoundError
 
 
 def get_location_category(text, nation):
-    """Use all available method, return first match"""
+    """Use all available methods, return first match"""
+
     try:
-        if contains_palace_name(text):
+        if contains_palace_name(text, palaces_strong):
             return AT_HOME
     except NotFoundError:
         pass
@@ -220,6 +229,12 @@ def get_location_category(text, nation):
     try:
         if looks_domestic(text):
             return DOMESTIC
+    except NotFoundError:
+        pass
+
+    try:
+        if contains_palace_name(text, palaces_weak):
+            return AT_HOME
     except NotFoundError:
         pass
 
