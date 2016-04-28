@@ -33,14 +33,28 @@ palaces = [
     u"audiens",
     u"Audience",
     u"Audiens",
+    u"Statsråd",
+    u"Företräde för",
+    u"företräde för",
+    u"modtager",
+    u"mottagning",
+    u"Mottagning",
+    u"afholder pressemøde",
+    u"Statsbesök från ",
+    u"Lunch för ",
+
     u"Det kongelige slott",
+    u"Åpent Slott",
+    u"åpent Slott",
     u"viser sig på balkongen",
+    u"viser sig på balkonen",
     u"Christiansborg Slot",
     u"Marselisborg Slot",
     u"Fredensborg Slot",
     u"Christian VII's Palæ",
     u"Amalienborg",
     u"Gråsten Slot",
+    u"Kongeskibet",
     u"Château de Cayx",
     u"på Slottsplassen",
     u"Oscarshall",
@@ -64,17 +78,37 @@ place_name_patterns = [
     u"(([A-ZÅÄÖØÆ][a-zåäöøæüñ]+[ ])+, ([A-ZÅÄÖØÆ][a-zåäöøæüñ]+))$",  # Silicon Valley, USA
     u" i ([A-ZÅÄÖØÆ][a-zåäöøæüñ]+)\.",  # i Roma.
     u"[bB]es[öø][gk] i ([A-ZÅÄÖØÆ][a-zåäöøæüñ]+)",  # Besök i Peru och Bolivia
+    u"[bB]es[öø][gk] på ([A-ZÅÄÖØÆ][a-zåäöøæüñ]+)",  # Besök på Gotland
     u"[bB]es[öø][gk] til ([A-ZÅÄÖØÆ][a-zåäöøæüñ]+)",  # besøk til Italia besøg
     u"[rR]ejser? til ([A-ZÅÄÖØÆ][a-zåäöøæüñ]+)",  # rejse til Italia
+    u"[An]nkommer till? ([A-ZÅÄÖØÆ][a-zåäöøæüñ]+)",  # ankomer til Italia
+    u"[bB]es[öø][gk]er ([A-ZÅÄÖØÆ][a-zåäöøæüñ]+)",  # besøker Italia
     u", ([A-ZÅÄÖØÆ][a-zåäöøæüñ]+)$",  # , Stockholm
     u" i ([A-ZÅÄÖØÆ][a-zåäöøæüñ]+)\.?$",  # i Roma.
-    u"([A-ZÅÄÖØÆ][a-zåäöøæüñ]+) \(\d\d\.\d\d\)",  # Oslo (11.00)
+    u" till? ([A-ZÅÄÖØÆ][a-zåäöøæüñ]+)\.?$",  # til Roma.
+    u"([A-ZÅÄÖØÆ][a-zåäöøæüñ]+) \(\d{1,2}.",  # Oslo (11.00)
     u"\(([A-ZÅÄÖØÆ][a-zåäöøæüñ]+), \d\d\.\d\d\)",  # (Holmenkollen, 11.30).
     u"([A-ZÅÄÖØÆ][a-zåäöøæüñ]+), \d{1,2}\.",  # , Tromsø, 29. - 31. januar
     u"([A-ZÅÄÖØÆ][a-zåäöøæüñ]+) den \d{1,2}\.",  # Tromsø den 29. - 31. januar
-    u"[bB]es[öø]ker ([A-ZÅÄÖØÆ][a-zåäöøæüñ]+)",  # besøker Italia
+    u"på ([A-ZÅÄÖØÆ][a-zåäöøæüñ]+) \d{1,2}\.",  # på Tromsø 29. - 31. januar
+    u"i ([A-ZÅÄÖØÆ][a-zåäöøæüñ]+) \d{1,2}\.",  # i Tromsø 29. - 31. januar
+    u"i ([A-ZÅÄÖØÆ][a-zåäöøæüñ]+) kl\. \d{1,2}\.",  # i Tromsø 29. - 31. januar
     u"^([A-ZÅÄÖØÆ][a-zåäöøæüñ]+)$",  # Stockholm
     u"och ([A-ZÅÄÖØÆ][a-zåäöøæüñ]+)$",  # Umeå och Stockholm
+]
+
+"""Place names and other words that indicate that the royal family member
+   is at a domestic function. These will be used as a last resort.
+"""
+domestic = [
+    u"invigning",
+    u"inviger",
+    u"indvielse",
+    u"indvier",
+    u"innsettelse",
+    u"åbning",
+    u"åpning",
+    u"Nobel",
 ]
 
 
@@ -89,6 +123,13 @@ class GeoCodingError(StandardError):
 def contains_palace_name(text):
     for palace in palaces:
         if palace in text:
+            return True
+    raise NotFoundError
+
+
+def looks_domestic(text):
+    for word in domestic:
+        if word in text:
             return True
     raise NotFoundError
 
@@ -114,14 +155,21 @@ def geoposition(text):
     cache_key = md5.new(text.encode('utf-8')).hexdigest()
     try:
         result = store.get(cache_key)
-        return loads(result)
+        if loads(result):
+            return loads(result)
+        else:
+            raise GeoCodingError
+
     except KeyError:
+        print "no cache for %s" % text.encode('utf-8')
         sleep(2)  # Sleep to avoid being blocked by Google Maps API
         result = requests.get(url).json()
         if len(result["results"]):
             store.put(cache_key, dumps(result["results"][0]))
             return result["results"][0]
         else:
+#            print "empty reply when geocoding %s" % text
+            store.put(cache_key, dumps(None))
             raise GeoCodingError
 
 
@@ -131,20 +179,18 @@ def get_names_and_geocode(text):
     placename = None
     try:
         placename = get_place_name(text)
-        print u"trying to geocode “%s” from %s" % (placename, text)
-        return geoposition(placename)
-    except GeoCodingError:
-        pass
-#        print u"Failed to geocode “%s” from “%s”, trying a different algorithm" % (placename, text)
-
-    try:
-        placename2 = get_place_name(text, reverse=True)
-        if placename != placename2:
-            print u"Failed. Trying to geocode “%s” from %s" % (placename2, text)
+        if placename:
             return geoposition(placename)
     except GeoCodingError:
         pass
-#        print u"Failed to geocode “%s” from “%s”, giving up" % (placename, text)
+
+    try:
+        placename2 = get_place_name(text, reverse=True)
+        if placename and (placename != placename2):
+            return geoposition(placename)
+    except GeoCodingError:
+        pass
+        print u"Failed to geocode “%s”. Tried “%s” and “%s”." % (text, placename, placename2)
 
     raise NotFoundError
 
@@ -166,6 +212,14 @@ def get_location_category(text, nation):
                 else:
                     return ABROAD
         return UNKNOWN
+    except NotFoundError:
+        pass
+    except TypeError:
+        pass
+
+    try:
+        if looks_domestic(text):
+            return DOMESTIC
     except NotFoundError:
         pass
 
