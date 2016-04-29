@@ -123,10 +123,16 @@ domestic = [
     u"indvier",
     u"innsettelse",
     u"åbning",
+    u"åbner",
     u"åpning",
     u"Nobel",
+    u"Nobel",
+    u"deltager i",
     u"Närvaro vid ",
     u"Besök hos ",
+    u"Besök på ",
+    u"Besök vid ",
+    u"overværer"
 
 ]
 
@@ -139,7 +145,7 @@ class GeoCodingError(StandardError):
     pass
 
 
-def contains_palace_name(text, namelist=palaces_strong):
+def contains_palace_name(text, namelist):
     for palace in namelist:
         if palace in text:
             return True
