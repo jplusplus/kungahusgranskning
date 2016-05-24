@@ -38,6 +38,7 @@ class SECalendar(RoyalCalendar):
                 row["title"] = event.find("h2").text
                 row["country"] = "Sverige"
                 row["person"] = person
+                row["url"] = url
 
                 """ Event details such as "plats" and "kontakt" are 
                     defined in a somewhat loose html format.

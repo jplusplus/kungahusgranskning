@@ -50,6 +50,7 @@ class DKCalendar(RoyalCalendar):
 
             data.append({
                 "link": row.find("a")["href"],
+                "url": self.driver.current_url,
                 "description": row.find("a").text,
                 "date_start": self._parse_date(date_string),
                 "country": "Danmark"
@@ -107,9 +108,9 @@ class DKCalendar(RoyalCalendar):
             in database.
         """
         if update_all:
-            events = self.db_table.all()
+            events = self.tables["by_event"].all()
         else:
-            events = self.db_table.find(persons='')
+            events = self.tables["by_event"].find(persons='')
 
         for row in events:
             url = "http://kongehuset.dk%s" % row["link"]
@@ -125,7 +126,7 @@ class DKCalendar(RoyalCalendar):
 
             row["persons"] = ",".join(persons)
             print ("Found following persons: " + row["persons"])
-            self.db_table.upsert(row, ["link"])
+            self.tables["by_event"].upsert(row, ["link"])
 
 
 

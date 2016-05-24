@@ -93,6 +93,7 @@ class NOCalendar(RoyalCalendar):
                 person_data = self._parse_events(r.text)
                 for row in person_data:
                     row["person"] = person[0]
+                    row["url"] = url
                 data += person_data
 
         return data
